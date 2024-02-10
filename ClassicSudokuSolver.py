@@ -16,7 +16,7 @@ GRID_SIZE = 9
 CELL_SIZE = 75
 
 FPS = 60
-SPEED = 1000
+SPEED = 1
 
 counter = 0
 
@@ -61,24 +61,20 @@ def board_create(file):
     return board
 
 
-def draw_background():
-    window = pygame.display.set_mode((GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE))
+def draw_background(window):
     window.fill(WHITE)
     for i in range(1, GRID_SIZE):
         hor_line = pygame.Rect(0, i * CELL_SIZE, GRID_SIZE * CELL_SIZE, 1)
         vert_line = pygame.Rect(i * CELL_SIZE, 0, 1, GRID_SIZE * CELL_SIZE)
         if i % 3 == 0:
-            pygame.draw.rect(window, BLACK, hor_line, 3)
-            pygame.draw.rect(window, BLACK, vert_line, 3)
+            pygame.draw.rect(window, BLACK, pygame.Rect.inflate(hor_line, 1, 3))
+            pygame.draw.rect(window, BLACK, pygame.Rect.inflate(vert_line, 3, 1))
         else:
             pygame.draw.rect(window, BLACK, hor_line)
             pygame.draw.rect(window, BLACK, vert_line)
 
-    return window
-
-def draw_board(board):
-    window = draw_background()
-
+def draw_board(window, board):
+    draw_background(window)
     for row in board.cells:
         for cell in row:
             if cell.value != EMPTY:
@@ -89,8 +85,8 @@ def draw_board(board):
                     text = font.render(str(cell.value), True, BLUE)
 
                 window.blit(text, (cell.col * CELL_SIZE + 18, cell.row * CELL_SIZE + 5))
-
-    pygame.display.update()
+    pygame.display.flip()
+    pygame.event.pump()
 
 def check_solved(board):
     if any([len(row) != GRID_SIZE for row in board.rows]):
@@ -102,7 +98,6 @@ def check_solved(board):
     return True
 
 def valid_move(board, cell, num):
-
     # Checks if position already filled (0 corresponds to empty cell)
     if cell.given:
         return False
@@ -121,9 +116,9 @@ def valid_move(board, cell, num):
 
     return True
 
-def solve_sudoku(board):
+def solve_sudoku(window, board):
     if check_solved(board):
-        draw_board(board)
+        draw_board(window, board)
         return
 
     for i in range(GRID_SIZE):
@@ -140,8 +135,8 @@ def solve_sudoku(board):
                             board.boxes[3 * (i // 3) + (j // 3)].add(num)
                             if counter == SPEED:
                                 counter = 0
-                                draw_board(board)
-                            return solve_sudoku(board)
+                                draw_board(window, board)
+                            return solve_sudoku(window, board)
                         except:
                             board.cells[i][j].value = EMPTY
                             board.rows[i].remove(num)
@@ -151,15 +146,14 @@ def solve_sudoku(board):
 
 
 def main():
-
     pygame.init()
-
+    window = pygame.display.set_mode((GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE))
     sudoku = "tests/" + input("Provide a sudoku please: ")
     board = board_create(sudoku)
-    draw_board(board)
+    draw_board(window, board)
 
     try:
-        solve_sudoku(board)
+        solve_sudoku(window, board)
         print("Finished! Enjoy the solution :)")
     except:
         print("Unsolvable sudoku :(")
